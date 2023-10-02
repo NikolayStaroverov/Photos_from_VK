@@ -38,9 +38,9 @@ class VKAPIClient:
                         # количество лайков
                         number_of_likes = photos_data['items'][i]['likes']['count']
                         # Дата в формате Unixtime
-                        date_Unixtime = photos_data['items'][i]['date']
+                        date_unixtime = photos_data['items'][i]['date']
                         date_time_split = []
-                        date_time_split = str(datetime.datetime.fromtimestamp(date_Unixtime)).split(' ')
+                        date_time_split = str(datetime.datetime.fromtimestamp(date_unixtime)).split(' ')
                         # все фото загружены в один день и в этом случае сохранится только одна фотография с датой этого дня
                         # поэтому дополнительно в названии файла указывается время
                         date_split = str(date_time_split[0]).split('-')
@@ -55,14 +55,12 @@ class VKAPIClient:
                                 file.write(requests.get(photo_url).content)
                 return photos_list
 
-        def save_to_YD(self, photos_list):
-                tok_YD = input("Введите Ваш токен Яндекс:")
-                token_YD = "OAuth "+tok_YD
+        def save_to_yd(self, photos_list, token_yandex):
                 base_url = "https://cloud-api.yandex.net"
-                headers = {"Authorization": token_YD}
+                headers = {"Authorization": token_yd}
                 url_for_new_folder = base_url+"/v1/disk/resources"
-                Folder_name = input("Введите название папки на Яндекс Диске:")
-                params = {'path': Folder_name}
+                folder_name = input("Введите название папки на Яндекс Диске:")
+                params = {'path': folder_name}
 
                 # Создание новой папки
                 response = requests.put(url_for_new_folder, headers=headers, params=params)
@@ -72,7 +70,7 @@ class VKAPIClient:
 
                 # Запись файлов на Яндекс Диск
                 for i in tqdm(range(len(photos_list)), desc='Запись файлов на Яндекс Диск'):
-                        params = {'path': Folder_name+'/'+photos_list[i].get('file_name')}
+                        params = {'path': folder_name+'/'+photos_list[i].get('file_name')}
                         response = requests.get(url_for_get_link, params=params, headers=headers)
                         url_upload = response.json().get('href', '')
                         with open(photos_list[i].get('file_name'), 'rb') as file:
@@ -80,8 +78,10 @@ class VKAPIClient:
 
 
 if __name__ == '__main__':
-        TOKEN = input("Введите токен VK:")
-        ID_VK = input("Введите Ваш ID VK:")
-        vk_client = VKAPIClient(TOKEN, ID_VK)
+        token = input("Введите токен VK:")
+        id_vk = input("Введите Ваш ID VK:")
+        tok_yd = input("Введите Ваш токен Яндекс:")
+        token_yd = "OAuth " + tok_yd
+        vk_client = VKAPIClient(token, id_vk)
         photos_list = vk_client.get_photos()
-        photos_save = vk_client.save_to_YD(photos_list)
+        photos_save = vk_client.save_to_yd(photos_list, token_yd)
