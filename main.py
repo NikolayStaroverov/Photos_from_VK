@@ -55,22 +55,26 @@ class VKAPIClient:
                                 file.write(requests.get(photo_url).content)
                 return photos_list
 
-        def save_to_yd(self, photos_list, token_yandex):
-                base_url = "https://cloud-api.yandex.net"
-                headers = {"Authorization": token_yd}
-                url_for_new_folder = base_url+"/v1/disk/resources"
-                folder_name = input("Введите название папки на Яндекс Диске:")
-                params = {'path': folder_name}
 
-                # Создание новой папки
-                response = requests.put(url_for_new_folder, headers=headers, params=params)
+class Yandex_client:
+        base_url = "https://cloud-api.yandex.net/v1/disk/resources"
 
-                # Запросить url для загрузки
-                url_for_get_link = url_for_new_folder+"/upload"
+        def __init__(self, token_yandex, folder_name, photos_list):
+                self.token = token_yandex
+                self.folder_name = folder_name
+                self.photos_list = photos_list
 
-                # Запись файлов на Яндекс Диск
-                for i in tqdm(range(len(photos_list)), desc='Запись файлов на Яндекс Диск'):
-                        params = {'path': folder_name+'/'+photos_list[i].get('file_name')}
+        def create_folder(self, headers):
+                params = {'path': self.folder_name}
+                response = requests.put(self.base_url, headers=headers, params=params)
+                return
+
+        def save_to_yd(self):
+                headers = {"Authorization": self.token}
+                self.create_folder(headers)
+                url_for_get_link = self.base_url + "/upload"
+                for i in tqdm(range(len(photos_list)), desc='Запись файло,в на Яндекс Диск'):
+                        params = {'path': self.folder_name + '/'+photos_list[i].get('file_name')}
                         response = requests.get(url_for_get_link, params=params, headers=headers)
                         url_upload = response.json().get('href', '')
                         with open(photos_list[i].get('file_name'), 'rb') as file:
@@ -81,7 +85,9 @@ if __name__ == '__main__':
         token = input("Введите токен VK:")
         id_vk = input("Введите Ваш ID VK:")
         tok_yd = input("Введите Ваш токен Яндекс:")
+        new_folder = input("Введите название папки на Яндекс Диске:")
         token_yd = "OAuth " + tok_yd
         vk_client = VKAPIClient(token, id_vk)
         photos_list = vk_client.get_photos()
-        photos_save = vk_client.save_to_yd(photos_list, token_yd)
+        yd_client = Yandex_client(token_yd, new_folder, photos_list)
+        yd_client.save_to_yd()
